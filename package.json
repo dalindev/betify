@@ -13,6 +13,7 @@
     "ejs": "^2.3.2",
     "express": "^4.13.0",
     "express-session": "^1.11.3",
+    "moment": "^2.20.1",
     "morgan": "^1.6.0",
     "mysql": "^2.7.0",
     "node-binance-api": "^0.4.21",

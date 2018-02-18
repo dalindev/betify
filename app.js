@@ -13,6 +13,8 @@ var port     = process.env.PORT || 3000;
 
 var passport = require('passport');
 var flash    = require('connect-flash');
+// moment js
+var moment = require('moment');
 
 // Database
 var mysql    = require('mysql');
@@ -92,8 +94,9 @@ binance.options({
 binance.websockets.prevDay('BTCUSDT', (error, response) => {
 	// var t = new Date( response.eventTime );
 	// var formatted = t.format("dd.mm.yyyy hh:MM:ss");
+	let et = moment(response.eventTime).format("L HH:mm:ss.SSS A");;
 
-	console.log('--------' + response.eventTime);
+	console.log('--------' + et);
 	console.log(response.bestBid);
 	console.log(response.bestAsk);
 });
