@@ -20,6 +20,7 @@
     "node-rest-client": "^3.1.0",
     "passport": "^0.2.2",
     "passport-local": "^1.0.0",
+    "sse": "0.0.8",
     "uuid": "^3.1.0"
   },
   "author": "DLH"

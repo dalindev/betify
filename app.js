@@ -16,6 +16,9 @@ var flash    = require('connect-flash');
 // moment js
 var moment = require('moment');
 
+var SSE = require('sse');
+var clients = [];
+
 // Database
 var mysql    = require('mysql');
 var dbconfig = require('./config/database');
@@ -75,12 +78,31 @@ var server = app.listen(port, "0.0.0.0", function () {
   let host = server.address().address
   let port = server.address().port
 
-  console.log("Server started: Betify at http://%s:%s", host, port)
+  console.log("Server started: Betify at http://%s:%s", host, port);
+
+  // initialize the /sse route
+  var sse = new SSE(server);
+
+  // When a connection is made
+  sse.on('connection', function(stream) {
+    console.log('Opened connection ');
+    clients.push(stream);
+
+    // Send data back to the client
+    var json = JSON.stringify({ message: 'Gotcha' });
+    stream.send(json);
+    console.log('Sent: ' + json);
+
+    // The connection was closed
+    stream.on('close', function() {
+      clients.splice(clients.indexOf(stream), 1);
+      console.log('Closed connection ');
+    });
+  });
 
 });
 
-
-
+// Binance API / webSocket
 const binance = require('node-binance-api');
 binance.options({
   APIKEY: '<key>',
@@ -89,17 +111,36 @@ binance.options({
   test: false // If you want to use sandbox mode where orders are simulated
 });
 
-
 // For a specific symbol:
 binance.websockets.prevDay('BTCUSDT', (error, response) => {
 	// var t = new Date( response.eventTime );
 	// var formatted = t.format("dd.mm.yyyy hh:MM:ss");
 	let et = moment(response.eventTime).format("L HH:mm:ss.SSS A");;
 
-	console.log('--------' + et);
-	console.log(response.bestBid);
-	console.log(response.bestAsk);
+	broadcast(et,response.bestBid,response.bestAsk)
 });
+
+// Every three seconds broadcast "{ message: 'Hello hello!' }" to all connected clients
+var broadcast = function(time,bid,ask) {
+  var json = JSON.stringify({
+  								eventTime: time,
+  								bid: bid,
+  								ask: ask
+  							});
+
+  clients.forEach(function(stream) {
+    stream.send(json);
+    console.log('Sent: ' + json);
+  });
+};
+
+
+
+
+
+
+
+
 
 
 

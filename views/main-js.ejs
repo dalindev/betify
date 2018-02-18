@@ -12,18 +12,26 @@ $(function() {
 	// determine active nav-item by url pathname
 	let pathname = window.location.pathname;
 	switch(pathname) {
-	case '/' :
-		$('li.nav-item').removeClass('active');
-		$('#home_page').addClass('active');
-		break;
-	case '/profile/edit':
-	case '/profile/address/add':
-	case '/profile':
-		$('li.nav-item').removeClass('active');
-		$('#profile_page').addClass('active');
-		break;
-	default:
+		case '/' :
+			$('li.nav-item').removeClass('active');
+			$('#home_page').addClass('active');
+			break;
+		case '/profile/edit':
+		case '/profile/address/add':
+		case '/profile':
+			$('li.nav-item').removeClass('active');
+			$('#profile_page').addClass('active');
+			break;
+		default:
 	}
+
+
+	var es = new EventSource("/sse");
+		es.onmessage = function (event) {
+		console.log(event.data);
+	};
+
+
 });
 
 </script>
