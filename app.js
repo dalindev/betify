@@ -79,6 +79,27 @@ var server = app.listen(port, "0.0.0.0", function () {
 
 
 
+const binance = require('node-binance-api');
+binance.options({
+  APIKEY: '<key>',
+  APISECRET: '<secret>',
+  useServerTime: true, // If you get timestamp errors, synchronize to server time at startup
+  test: false // If you want to use sandbox mode where orders are simulated
+});
+
+
+// For a specific symbol:
+binance.websockets.prevDay('BTCUSDT', (error, response) => {
+	// var t = new Date( response.eventTime );
+	// var formatted = t.format("dd.mm.yyyy hh:MM:ss");
+
+	console.log('--------' + response.eventTime);
+	console.log(response.bestBid);
+	console.log(response.bestAsk);
+});
+
+
+
 
 
 
