@@ -1,0 +1,16 @@
+body {
+	padding-top: 56px;
+	font-family: 'Open Sans', sans-serif;
+}
+
+/* top-navbar */
+.nav-login-signup {
+	color: lightgray;
+}
+.nav-login-signup:hover  {
+	color: white;
+}
+
+.page-header {
+	margin: 30px;
+}

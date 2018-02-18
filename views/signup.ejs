@@ -1,0 +1,90 @@
+<!-- views/signup.ejs -->
+<!doctype html>
+<html>
+<head>
+	<title>Shipping.CA</title>
+	<%- include('header.ejs') %>
+</head>
+<body>
+
+	<%- include('top-navbar.ejs', {user: false}); %>
+
+	<div class="container">
+		<div class="row">
+			<div class="col">
+			</div>
+			<div class="col-lg-6">
+
+				<h2><span class="fa fa-sign-in"></span> Signup</h2>
+				<hr>
+				<!-- show any messages that come back with authentication -->
+				<% if (message.length > 0) { %>
+					<div class="alert alert-danger"><%= message %></div>
+				<% } %>
+
+				<!-- LOGIN FORM -->
+				<form action="/signup" method="post">
+					<div class="form-group">
+						<label>Username</label>
+						<input type="text" class="form-control" name="username">
+					</div>
+					<div class="form-group">
+						<label>Password</label>
+						<input type="password" class="form-control" name="password">
+					</div>
+
+					<hr>
+					<div class="row form-group">
+						<div class="col-lg-6">
+							<label>First Name</label>
+							<input type="text" class="form-control form-control" name="firstname">
+						</div>
+						<div class="col-lg-6">
+							<label>Last Name</label>
+							<input type="text" class="form-control form-control" name="lastname">
+						</div>
+					</div>
+					<div class="form-group">
+						<label>Email</label>
+						<input type="email" class="form-control form-control" name="email">
+					</div>
+					<div class="form-group">
+						<label>Phone</label>
+						<input type="text" class="form-control form-control" name="phone">
+					</div>
+					<div class="row form-group">
+						<div class="col-lg-4">
+							<label>City</label>
+							<input type="text" class="form-control form-control" name="city">
+						</div>
+						<div class="col-lg-2">
+							<label>Prov</label>
+							<input type="text" class="form-control form-control" name="prov">
+						</div>
+						<div class="col-lg-3">
+							<label>Country</label>
+							<input type="text" class="form-control form-control" name="country">
+						</div>
+						<div class="col-lg-3">
+							<label>Postal Code</label>
+							<input type="text" class="form-control form-control" name="postal_code">
+						</div>
+					</div>
+
+					<button type="submit" class="btn btn-success">Signup</button>
+				</form>
+
+				<hr>
+
+				<p>Already have an account? <a href="/login">Login</a></p>
+				<p>Or go <a href="/">home</a>.</p>
+
+			</div>
+			<div class="col">
+			</div>
+		</div>
+	</div>
+
+<%- include('main-js.ejs') %>
+</body>
+</html>

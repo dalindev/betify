@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+<head>
+	<title>Betify</title>
+	<%- include('header.ejs') %>
+</head>
+<body>
+	<%- include('top-navbar.ejs', {user: user}); %>
+
+	<div class="container">
+
+		<div class="page-header text-center">
+			<h1><span class="fa fa-user"></span>Edit address</h1>
+		</div>
+		<hr>
+		<div class="row">
+
+			<!-- NEW ADDRESS FORM -->
+			<form action="/profile/address/update/<%= address.uuid %>" method="post">
+				<div class="h4 text-center"><%= user.username %></div>
+
+				<!-- <legend>Primary Address: </legend> -->
+				<fieldset class="form-group">
+					<div class="form-check">
+						<label class="form-check-label">
+							<input type="radio" class="form-check-input" name="primary_address" value="1" <% if (address.primary_address == 1) { %> checked <% } %> > Primary address
+						</label>
+					</div>
+ 					<div class="form-check">
+						<label class="form-check-label">
+							<input type="radio" class="form-check-input" name="primary_address" value="0" <% if (address.primary_address == 0) { %> checked <% } %> > Non-Primary Address
+						</label>
+					</div>
+				</fieldset>
+
+				<!-- Address name -->
+				<div class="form-group">
+					<label>Address Name</label>
+					<input type="text" class="form-control form-control" name="address_name" placeholder="ex: Mom's Home" value="<%= address.address_name %>" required>
+				</div>
+
+				<!-- Country -->
+				<div class="form-group">
+					<label>Country</label>
+					<input type="text" class="form-control form-control" name="country" placeholder="中国" value="<%= address.country %>" required>
+				</div>
+
+				<!-- Street address -->
+				<div class="form-group">
+					<label>Street address</label>
+					<input type="text" class="form-control form-control" name="address" placeholder="Street and number, P.O. box, c/o." value="<%= address.address %>" required>
+				</div>
+				<div class="form-group">
+					<input type="text" class="form-control form-control" name="address2" placeholder="Apartment, suite, unit, building, floor, etc." value="<%= address.address2 %>">
+				</div>
+
+				<!-- City, Prov, Postal Code -->
+				<div class="row form-group">
+					<div class="col-lg-6">
+						<label>City</label>
+						<input type="text" class="form-control form-control" name="city" value="<%= address.city %>" required>
+					</div>
+					<div class="col-lg-3">
+						<label>Prov</label>
+						<input type="text" class="form-control form-control" name="prov" value="<%= address.prov %>" required>
+					</div>
+					<div class="col-lg-3">
+						<label>Postal code</label>
+						<input type="text" class="form-control form-control" name="postal_code" value="<%= address.postal_code %>" required>
+					</div>
+				</div>
+
+				<!-- Phone number -->
+				<div class="form-group">
+					<label>Phone</label>
+					<input type="text" class="form-control form-control" name="phone" value="<%= address.phone %>">
+				</div>
+
+				<button type="submit" class="btn btn-info">Update Address</button>
+			</form>
+
+		</div>
+
+	</div>
+
+<%- include('main-js.ejs') %>
+</body>
+</html>
