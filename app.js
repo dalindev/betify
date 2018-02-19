@@ -102,6 +102,9 @@ var server = app.listen(port, "0.0.0.0", function () {
 
 });
 
+
+
+
 // Binance API / webSocket
 const binance = require('node-binance-api');
 binance.options({
@@ -115,7 +118,7 @@ binance.options({
 binance.websockets.prevDay('BTCUSDT', (error, response) => {
 	// var t = new Date( response.eventTime );
 	// var formatted = t.format("dd.mm.yyyy hh:MM:ss");
-	let et = moment(response.eventTime).format("L HH:mm:ss.SSS A");;
+	let et = moment(response.eventTime).format("HH:mm:ss A");;
 
 	broadcast(et,response.bestBid,response.bestAsk)
 });

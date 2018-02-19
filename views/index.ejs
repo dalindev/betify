@@ -11,6 +11,81 @@
 	<%- include('top-navbar.ejs', {user: user}); %>
 
 	<%- include('main-js.ejs') %>
+	<div class="chart-container" style="position: relative; height:40vh; width:60vw; margin: 0 auto;">
+	    <canvas id="myChart"></canvas>
+	</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.bundle.min.js"></script>
+
+	<script type="text/javascript">
+	$(function() {
+
+		// binance data stream
+		var es = new EventSource("/sse");
+			es.onmessage = function (event) {
+			let data = JSON.parse(event.data);
+
+			addData(myChart, data.eventTime, data.bid);
+		};
+
+		// Enable pusher logging - don't include this in production
+
+		var ctx = document.getElementById("myChart").getContext('2d');
+		var myChart = new Chart(ctx, {
+		    type: 'line',
+		    data: {
+		        labels: [],
+		        datasets: [{
+		            label: 'BTCUSD',
+		            data: [],
+		            // backgroundColor: [
+		            //     'rgba(255, 99, 132, 0.2)',
+		            //     'rgba(54, 162, 235, 0.2)',
+		            //     'rgba(255, 206, 86, 0.2)',
+		            //     'rgba(75, 192, 192, 0.2)',
+		            //     'rgba(153, 102, 255, 0.2)',
+		            //     'rgba(255, 159, 64, 0.2)'
+		            // ],
+		            // borderColor: [
+		            //     'rgba(255,99,132,1)',
+		            //     'rgba(54, 162, 235, 1)',
+		            //     'rgba(255, 206, 86, 1)',
+		            //     'rgba(75, 192, 192, 1)',
+		            //     'rgba(153, 102, 255, 1)',
+		            //     'rgba(255, 159, 64, 1)'
+		            // ],
+		            borderWidth: 1
+		        }]
+		    },
+		    options: {
+		        scales: {
+		            yAxes: [{
+		                ticks: {
+		                    beginAtZero:false
+		                }
+		            }]
+		        }
+		    }
+		});
+
+		function addData(chart, label, data) {
+		    chart.data.labels.push(label);
+		    if(chart.data.labels.length > 20){
+		    	chart.data.labels.splice(0, 1); // remove first label
+			}
+		    chart.data.datasets.forEach((dataset) => {
+		        dataset.data.push(data);
+		        if(dataset.data.length > 20){
+			        dataset.data.splice(0, 1); // remove first data point
+			    }
+		    });
+
+		    chart.update();
+		}
+
+
+	});
+	</script>
 </body>
 
 </html>
