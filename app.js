@@ -104,8 +104,9 @@ var server = app.listen(port, "0.0.0.0", function () {
 
 
 
-
+// ===============================================================================
 // Binance API / webSocket
+
 const binance = require('node-binance-api');
 binance.options({
   APIKEY: '<key>',
@@ -114,26 +115,44 @@ binance.options({
   test: false // If you want to use sandbox mode where orders are simulated
 });
 
+
+var gameTimeCounter = 0;
+var startBtcPrice = 0;
+var endBtcPrice = 0;
 // For a specific symbol:
 binance.websockets.prevDay('BTCUSDT', (error, response) => {
 	// var t = new Date( response.eventTime );
 	// var formatted = t.format("dd.mm.yyyy hh:MM:ss");
-	let et = moment(response.eventTime).format("HH:mm:ss A");;
+  let closeTime = moment(response.closeTime).format("HH:mm:ss");
+  let closePrice = response.close;
 
-	broadcast(et,response.bestBid,response.bestAsk)
+  if(gameTimeCounter == 0) {
+    startBtcPrice = response.close;
+    gameTimeCounter++;
+  } else if(gameTimeCounter == 9){
+    gameTimeCounter = 0;
+    endBtcPrice = closePrice;
+  } else {
+    gameTimeCounter++;
+  }
+
+  // console.log(response);
+	broadcast(closeTime, closePrice, gameTimeCounter, startBtcPrice, endBtcPrice);
 });
 
 // Every three seconds broadcast "{ message: 'Hello hello!' }" to all connected clients
-var broadcast = function(time,bid,ask) {
+var broadcast = function(time,close,gameTimeCounter,startBtcPrice,endBtcPrice) {
   var json = JSON.stringify({
   								eventTime: time,
-  								bid: bid,
-  								ask: ask
+  								close: close,
+                  gameTimeCounter: gameTimeCounter,
+                  startBtcPrice: startBtcPrice,
+                  endBtcPrice: endBtcPrice
   							});
 
   clients.forEach(function(stream) {
     stream.send(json);
-    console.log('Sent: ' + json);
+    // console.log('Sent: ' + json);
   });
 };
 
