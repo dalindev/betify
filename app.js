@@ -30,7 +30,7 @@ connection.connect(function(err) {
 })
 
 /* -------------------------------------------
-	Public file
+  Public file
 ------------------------------------------- */
 app.use(express.static(__dirname + '/public'));
 
@@ -48,7 +48,7 @@ app.use(cookieParser()); // read cookies (needed for auth)
 
  // to support URL-encoded bodies
 app.use(bodyParser.urlencoded({
-	extended: true
+  extended: true
 }));
 app.use(bodyParser.json());
 
@@ -56,9 +56,9 @@ app.set('view engine', 'ejs'); // set up ejs for templating
 
 // required for passport
 app.use(session({
-	secret: config.session_secret,
-	resave: true,
-	saveUninitialized: true
+  secret: config.session_secret,
+  resave: true,
+  saveUninitialized: true
  } )); // session secret
 app.use(passport.initialize());
 app.use(passport.session()); // persistent login sessions
@@ -66,7 +66,7 @@ app.use(flash()); // use connect-flash for flash messages stored in session
 
 
 /* -------------------------------------------
-	API
+  API
 ------------------------------------------- */
 require('./app/routes.js')(app, passport); // load our routes and pass in our app and fully configured passport
 
@@ -102,7 +102,11 @@ var server = app.listen(port, "0.0.0.0", function () {
 
 });
 
+
+
+// ===============================================================================
 // Binance API / webSocket
+
 const binance = require('node-binance-api');
 binance.options({
   APIKEY: '<key>',
@@ -111,26 +115,82 @@ binance.options({
   test: false // If you want to use sandbox mode where orders are simulated
 });
 
+
+// --------- BTCUSDT ---------
+var gameTimeCounter = 0;
+var startBtcPrice = 0;
+var endBtcPrice = 0;
 // For a specific symbol:
 binance.websockets.prevDay('BTCUSDT', (error, response) => {
-	// var t = new Date( response.eventTime );
-	// var formatted = t.format("dd.mm.yyyy hh:MM:ss");
-	let et = moment(response.eventTime).format("L HH:mm:ss.SSS A");;
+  // var t = new Date( response.eventTime );
+  // var formatted = t.format("dd.mm.yyyy hh:MM:ss");
 
-	broadcast(et,response.bestBid,response.bestAsk)
-});
+  // save to database
+  if(response.symbol && response.close && response.closeTime && response.closeQty){
+
+    let closeTime = moment(response.closeTime).format("HH:mm:ss");
+    let closePrice = response.close;
+
+    // game loop counter
+    if(gameTimeCounter == 0) {
+      startBtcPrice = response.close;
+      gameTimeCounter++;
+    } else if(gameTimeCounter == 9){
+      gameTimeCounter = 0;
+      endBtcPrice = closePrice;
+    } else {
+      gameTimeCounter++;
+    }
+
+    let btcusdtMysql = {
+          exchange_name: 'Binance',
+          symbol: response.symbol,
+          close_price: response.close,
+          close_time: response.closeTime,
+          game_time_counter: gameTimeCounter,
+          close_qty: response.closeQty
+        };
+
+    let insertQuery = "INSERT INTO btcusdt_table (exchange_name, symbol, close_price, close_time, game_time_counter, close_qty) values (?,?,?,?,?,?)";
+    connection.query(insertQuery,[
+                        btcusdtMysql.exchange_name,
+                        btcusdtMysql.symbol,
+                        btcusdtMysql.close_price,
+                        btcusdtMysql.close_time,
+                        btcusdtMysql.game_time_counter,
+                        btcusdtMysql.close_qty
+                      ],function(err, rows) {
+                        if(err) {
+                          console.log('error save btcusdt_table --------->'+err);
+                        } else {
+                          // console.log(response);
+                        connection.query('SELECT * FROM addresses ', function (error, results, fields) {
+                          if (error) throw error;
+                            // res.end(
+                              JSON.stringify('error ' + results)
+                            // );
+                          });
+
+                          broadcast(closeTime, closePrice, gameTimeCounter, startBtcPrice, endBtcPrice);
+                        }
+                      });
+    }
+  });
+
 
 // Every three seconds broadcast "{ message: 'Hello hello!' }" to all connected clients
-var broadcast = function(time,bid,ask) {
+var broadcast = function(time,close,gameTimeCounter,startBtcPrice,endBtcPrice) {
   var json = JSON.stringify({
-  								eventTime: time,
-  								bid: bid,
-  								ask: ask
-  							});
+                  eventTime: time,
+                  close: close,
+                  gameTimeCounter: gameTimeCounter,
+                  startBtcPrice: startBtcPrice,
+                  endBtcPrice: endBtcPrice
+                });
 
   clients.forEach(function(stream) {
     stream.send(json);
-    console.log('Sent: ' + json);
+    // console.log('Sent: ' + json);
   });
 };
 

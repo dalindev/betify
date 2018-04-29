@@ -14,3 +14,9 @@ body {
 .page-header {
 	margin: 30px;
 }
+
+#myChart{
+    /*height: 500px !important;*/
+    /*width:  !important;*/
+    /*margin: 0 auto;*/
+}

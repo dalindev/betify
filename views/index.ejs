@@ -11,6 +11,124 @@
 	<%- include('top-navbar.ejs', {user: user}); %>
 
 	<%- include('main-js.ejs') %>
+	<div class="chart-container" style="position: relative; height:40vh; width:60vw; margin: 0 auto;">
+	    <canvas id="myChart"></canvas>
+		<div class="container-fluid">
+			<div>
+				Start: <span id="startBtcPrice"></span>
+			</div>
+			<div>
+				End: <span id="endBtcPrice"></span>
+			</div>
+			<div>
+				Change: <span id="changeBtcPrice" style="color: white;"></span>
+			</div>
+		</div>
+	</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.bundle.min.js"></script>
+
+	<script type="text/javascript">
+	$(function() {
+
+		// binance data stream
+		var es = new EventSource("/sse");
+			es.onmessage = function (event) {
+			let data = JSON.parse(event.data);
+			let cpColor = '#F7931A';
+			if(data.gameTimeCounter == 0){
+				cpColor = '#7FFF00';
+
+				let ele_CBP = $('#changeBtcPrice');
+				let changeBtcPrice = +data.endBtcPrice - +data.startBtcPrice;
+				if(changeBtcPrice > 0){
+					ele_CBP.css('background', 'green');
+				}else if(changeBtcPrice < 0){
+					ele_CBP.css('background', 'red');
+				}else{
+					ele_CBP.css('background', 'black');
+				}
+
+				$('#startBtcPrice').text(data.startBtcPrice);
+				$('#endBtcPrice').text(data.endBtcPrice);
+				$('#changeBtcPrice').text(+data.endBtcPrice - +data.startBtcPrice);
+
+			}
+			moveData(myChart, data.eventTime, data.close, cpColor);
+		};
+
+		// Enable pusher logging - don't include this in production
+
+		var ctx = document.getElementById("myChart").getContext('2d');
+		var myChart = new Chart(ctx, {
+		    type: 'line',
+		    data: {
+		        labels: [],
+		        datasets: [{
+		            label: 'BTCUSD',
+		            data: [],
+		            backgroundColor: 'rgba(55, 99, 132, 0.1)',
+		            pointBackgroundColor: [],
+		            borderColor: ['#F7931A'],
+		            borderWidth: 2,
+		            fill: true,
+		            lineTension: 0.3
+		        }]
+		    },
+		    options: {
+		    		responsive: true,
+      			maintainAspectRatio: true,
+      			animation: {
+			        duration: 1000,
+			        easing: 'linear'
+			      },
+		        scales: {
+		        		xAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Time'
+                    }
+                }],
+		            yAxes: [{
+		            		display: true,
+		            		scaleLabel: {
+                        display: true,
+                        labelString: 'BTCUSDT'
+                    },
+		                ticks: {
+		                    beginAtZero:false,
+		                    showLabelBackdrop: true,
+		                }
+		            }]
+		        }
+		    }
+		});
+
+		function moveData(chart, label, data, cpColor) {
+
+		    chart.data.labels.push(label);
+		    if(chart.data.labels.length > 60){
+		    	chart.data.labels.splice(0, 1); // remove first label
+				}
+		    chart.data.datasets.forEach((dataset) => {
+		        // new data
+		        dataset.data.push(data);
+		    		// data color
+		        dataset.pointBackgroundColor.push(cpColor);
+
+		        if(dataset.data.length > 60){
+			        dataset.data.splice(0, 1); // remove first data point
+			        dataset.pointBackgroundColor.splice(0, 1); // remove first data color
+			    }
+		    });
+
+		    chart.update();
+		}
+
+
+	});
+	</script>
 </body>
 
 </html>
