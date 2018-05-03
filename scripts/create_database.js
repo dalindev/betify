@@ -2,10 +2,10 @@
  *
  */
 
-var mysql = require('mysql');
-var dbconfig = require('../config/database');
+var mysql = require('mysql')
+var dbconfig = require('../config/database')
 
-var connection = mysql.createConnection(dbconfig.connection);
+var connection = mysql.createConnection(dbconfig.connection)
 
 // connection.query("CREATE DATABASE IF NOT EXISTS " + dbconfig.database, function (err, result) {
 //     if (err) throw err;
@@ -37,10 +37,9 @@ CREATE TABLE IF NOT EXISTS `' + dbconfig.database + '`.`' + dbconfig.users_table
     UNIQUE INDEX `id_UNIQUE` (`id` ASC), \
     UNIQUE INDEX `username_UNIQUE` (`username` ASC) \
 )', function (err, result) {
-    if (err) throw err;
-    console.log(dbconfig.users_table + " created");
-});
-
+  if (err) throw err
+  console.log(dbconfig.users_table + ' created')
+})
 
 /**
  *
@@ -66,10 +65,9 @@ CREATE TABLE IF NOT EXISTS `' + dbconfig.database + '`.`' + dbconfig.addresses_t
         PRIMARY KEY (`id`), \
     UNIQUE INDEX `id_UNIQUE` (`id` ASC) \
 )', function (err, result) {
-    if (err) throw err;
-    console.log(dbconfig.addresses_table + " created");
-});
-
+  if (err) throw err
+  console.log(dbconfig.addresses_table + ' created')
+})
 
 /**
  *
@@ -89,10 +87,8 @@ CREATE TABLE IF NOT EXISTS `' + dbconfig.database + '`. btcusdt_table ( \
         PRIMARY KEY (`id`), \
     UNIQUE INDEX `id_UNIQUE` (`id` ASC) \
 )', function (err, result) {
-    if (err) throw err;
-    console.log("btcusdt_table created");
-});
+  if (err) throw err
+  console.log('btcusdt_table created')
+})
 
-
-connection.end();
-
+connection.end()
