@@ -6,6 +6,7 @@ var config = require('./configuration/conf.json')
 var express = require('express')
 var session = require('express-session')
 var cookieParser = require('cookie-parser')
+var cookie = require('cookie');
 var bodyParser = require('body-parser')
 var morgan = require('morgan')
 var app = express()
@@ -30,10 +31,12 @@ connection.connect(function (err) {
   console.log('Looks Good! You are now connected...')
 })
 
+
 /* -------------------------------------------
 Public file
 ------------------------------------------- */
-app.use(express.static(path.resolve(__dirname, '/public')))
+// app.use(express.static(path.resolve(__dirname, '/public')))
+app.use(express.static(__dirname));
 
 // configuration ===============================================================
 // connect to our database
@@ -68,6 +71,7 @@ app.use(flash()) // use connect-flash for flash messages stored in session
 ------------------------------------------- */
 require('./app/routes.js')(app, passport) // load our routes and pass in our app and fully configured passport
 
+
 // launch ======================================================================
 // app.listen(port);
 var server = app.listen(port, '0.0.0.0', function () {
@@ -97,8 +101,30 @@ var server = app.listen(port, '0.0.0.0', function () {
   })
 })
 
+var io = require('socket.io').listen(server);
+
+io.on('connection', function(socket){
+  let cookief = socket.handshake.headers.cookie;
+  let cookies = cookie.parse(socket.handshake.headers.cookie);
+
+  let betify_user_name = 'Guest User';
+
+  if(cookies.betify_user_name){
+    betify_user_name = cookies.betify_user_name;
+  }
+
+  socket.on('main chatroom', function(msg){
+    io.emit('main chatroom', {
+      user_name: betify_user_name,
+      msg: msg
+    });
+  });
+});
+
 // ===============================================================================
 // Binance API / webSocket
+
+/*
 
 const binance = require('node-binance-api')
 binance.options({
@@ -198,3 +224,5 @@ var broadcast = function (time, close, gameTimeCounter, startBtcPrice, endBtcPri
     // console.log('Sent: ' + json);
   })
 }
+
+*/

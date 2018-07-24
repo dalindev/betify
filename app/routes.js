@@ -32,11 +32,19 @@ module.exports = function (app, passport) {
   app.get('/', function (req, res) {
     // if user is authenticated in the session, carry on
     if (req.isAuthenticated()) {
+
+      console.log('req.user.username --> ' + req.user.username);
+
+      var cookie = req.cookies.betify_user_name;
+      res.cookie('betify_user_name',req.user.username, { maxAge: 900000, httpOnly: true });
+
       // load the index.ejs file
       res.render('index.ejs', {
         user: req.user // get the user out of session and pass to template
       })
     } else {
+      res.clearCookie('betify_user_name');
+
       res.render('index.ejs', {
         user: false
       })
