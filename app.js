@@ -121,10 +121,10 @@ io.on('connection', function(socket){
   });
 });
 
+
 // ===============================================================================
 // Binance API / webSocket
 
-/*
 
 const binance = require('node-binance-api')
 binance.options({
@@ -135,39 +135,47 @@ binance.options({
 })
 
 // --------- BTCUSDT ---------
-var gameTimeCounter = 0
-var startBtcPrice = 0
-var endBtcPrice = 0
+var gameTimeCounter = new Date().getTime();
+var gameStartBtcPrice = 0
+var gameEndBtcPrice = 0
+
 // For a specific symbol:
 binance.websockets.prevDay('BTCUSDT', (error, response) => {
   // var t = new Date( response.eventTime );
   // var formatted = t.format("dd.mm.yyyy hh:MM:ss");
   if (error) throw error
 
+  // console.log(response);
+
   // save to database
-  if (response.symbol && response.close && response.closeTime && response.closeQty) {
+  if (response.symbol &&
+      response.close &&
+      response.closeTime &&
+      response.closeQty &&
+      response.eventTime
+  ) {
     let closeTime = moment(response.closeTime).format('HH:mm:ss')
     let closePrice = response.close
+    let eventTime = response.eventTime
+
+    // console.log(gameTimeCounter);
+    // console.log(eventTime);
+    // console.log(gameTimeCounter < eventTime);
 
     // game loop counter
-    if (gameTimeCounter === 0) {
-      startBtcPrice = response.close
-      gameTimeCounter++
-    } else if (gameTimeCounter === 9) {
-      gameTimeCounter = 0
-      endBtcPrice = closePrice
-    } else {
-      gameTimeCounter++
-    }
+    if (gameTimeCounter <= eventTime) {
+      gameStartBtcPrice = closePrice;
+      gameEndBtcPrice = closePrice;
+      gameTimeCounter = gameTimeCounter + 10*1000;
 
-    // game start or game end
-    if (gameTimeCounter === 0 || gameTimeCounter === 9) {
+      let gameId = Math.round(eventTime/1000);
+
       let btcusdtMysql = {
         exchange_name: 'Binance',
         symbol: response.symbol,
         close_price: response.close,
         close_time: response.closeTime,
-        game_time_counter: gameTimeCounter,
+        game_time_counter: gameId,
         close_qty: response.closeQty
       }
 
@@ -200,11 +208,11 @@ binance.websockets.prevDay('BTCUSDT', (error, response) => {
               // );
             })
             // console.log(JSON.stringify('res--> ' + results));
-            broadcast(closeTime, closePrice, gameTimeCounter, startBtcPrice, endBtcPrice)
+            broadcast('BET', closePrice, 0, gameStartBtcPrice, gameEndBtcPrice)
           }
         })
     } else {
-      broadcast(closeTime, closePrice, gameTimeCounter, startBtcPrice, endBtcPrice)
+      broadcast('', closePrice, 10, gameStartBtcPrice, gameEndBtcPrice)
     }
   }
 })
@@ -225,4 +233,4 @@ var broadcast = function (time, close, gameTimeCounter, startBtcPrice, endBtcPri
   })
 }
 
-*/
+
