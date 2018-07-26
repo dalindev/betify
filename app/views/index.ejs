@@ -16,19 +16,26 @@
 
   <%- include('main-js.ejs') %>
 
-  <div class="container-fluid row" style="height:40vh; margin-bottom: 50px;">
-    <div class="chart-container col-xs-8" style="position: relative; width:50vw; margin: 0;">
-      <canvas id="myChart"></canvas>
-    </div>
-    <div class="col-xs-4">
-      <div>
-        Start: <span id="startBtcPrice"></span>
+  <div class="" style="min-height:40vh; margin-bottom: 50px;">
+    <div class="row">
+      <div class="chart-container col-7">
+        <canvas id="myChart"></canvas>
       </div>
-      <div>
-        End: <span id="endBtcPrice"></span>
-      </div>
-      <div>
-        Change: <span id="changeBtcPrice" style="color: white;"></span>
+      <div class="col-5">
+        <div>
+          Start: <span id="startBtcPrice"></span>
+        </div>
+        <div>
+          End: <span id="endBtcPrice"></span>
+        </div>
+        <div>
+          Change: <span id="changeBtcPrice" style="color: white;"></span>
+        </div>
+        <hr>
+        <div class="row">
+          <div class="col-6"><button class="btn btn-success">Going Up</button></div>
+          <div class="col-6"><button class="btn btn-danger">Going Down</button></div>
+        </div>
       </div>
     </div>
   </div>

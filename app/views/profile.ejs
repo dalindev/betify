@@ -12,7 +12,7 @@
 	<div class="container">
 
 		<div class="page-header text-center">
-			<h1>我的主页</h1>
+			<h1>My Profile</h1>
 		</div>
 
 		<div class="row">
@@ -22,7 +22,7 @@
 				<br>
 				<div class="well">
 					<div class="row">
-						<div class="col h3">用户名: <%= user.username %></div>
+						<div class="col h3">User: <%= user.email %></div>
 	    				<div class="col">
 							<a href="/profile/edit" class="btn btn-success pull-right">
 								<i class="fa fa-user fa-lg" aria-hidden="true"></i> Edit My Profile
@@ -34,15 +34,15 @@
 						<span>Email</span>: <%= user.email %><br>
 						<span>Lastname</span>: <%= user.lastname %><br>
 						<span>Firstname</span>: <%= user.firstname %><br>
-						<span>City</span>: <%= user.city %><br>
+						<!-- <span>City</span>: <%= user.city %><br>
 						<span>Prov</span>: <%= user.prov %><br>
 						<span>Postal Code</span>: <%= user.postal_code %><br>
 						<span>Country</span>: <%= user.country %><br>
-						<span>Phone/span:</span> <%= user.phone %><br>
-						<span>Date of birth</span>: <%= user.birth_day %><br><br>
+						<span>Phone/span:</span> <%= user.phone %><br> -->
+						<span>Status</span>: <%= user.status %><br><br>
 
-						<small><span>Register date</span>: <%= user.created %></small><br>
-						<small><span>Last modified</span>: <%= user.modified %></small><br>
+						<small><span>Register date</span>: <%= user.createdAt %></small><br>
+						<small><span>Last modified</span>: <%= user.updatedAt %></small><br>
 					</div>
 				</div>
 			</div>
@@ -53,12 +53,12 @@
 				<br>
 				<div class="well">
 					<div class="row">
-						<div class="col h3">Address:</div>
+						<!-- <div class="col h3">Address:</div>
 	    				<div class="col">
 							<a href="/profile/address/add" class="btn btn-success pull-right">
-								<i class="fa fa-map-marker fa-lg" aria-hidden="true"></i> 添加新地址
+								<i class="fa fa-map-marker fa-lg" aria-hidden="true"></i> Add Address
 							</a>
-	    				</div>
+	    				</div> -->
 					</div>
 
 					<table class="table table-bordered">

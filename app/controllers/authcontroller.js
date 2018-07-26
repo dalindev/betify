@@ -3,26 +3,29 @@ var exports = module.exports = {}
 
 exports.signup = function(req,res){
 
-	res.render('signup', { message: req.flash('signupMessage')});
+  res.render('signup', { message: req.flash('signupMessage')});
 
 }
 
-exports.signin = function(req,res){
+exports.login = function(req,res){
 
-	res.render('signin');
+  res.render('login', { message: req.flash('loginMessage')});
 
 }
 
-exports.dashboard = function(req,res){
+exports.profile = function(req,res){
 
-	res.render('dashboard');
+  res.render('profile', {
+    user: req.user, // get the user out of session and pass to template
+    addresses: ''
+  });
 
 }
 
 exports.logout = function(req,res){
 
   req.session.destroy(function(err) {
-  	res.redirect('/');
+    res.redirect('/');
   });
 
 }
