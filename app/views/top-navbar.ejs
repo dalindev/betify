@@ -1,0 +1,36 @@
+<nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+<a class="navbar-brand" href="/">Betify</a>
+<button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+	<span class="navbar-toggler-icon"></span>
+</button>
+<div class="navbar-collapse collapse" id="navbarsExampleDefault" style="">
+	<ul class="navbar-nav mr-auto">
+		<li class="nav-item active" id="home_page">
+			<a class="nav-link" href="/">首页 <span class="sr-only">(current)</span></a>
+		</li>
+		<% if (user) { %>
+		<li class="nav-item" id="profile_page">
+			<a class="nav-link" href="/profile">我的主页</a>
+		</li>
+		<% } %>
+		<!-- <li class="nav-item dropdown">
+			<a class="nav-link dropdown-toggle" href="http://example.com" id="dropdown01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Dropdown</a>
+			<div class="dropdown-menu" aria-labelledby="dropdown01">
+				<a class="dropdown-item" href="#">Action</a>
+				<a class="dropdown-item" href="#">Another action</a>
+				<a class="dropdown-item" href="#">Something else here</a>
+			</div>
+		</li> -->
+	</ul>
+	<div class="form-inline pull-right">
+		<!-- if user logged in  -->
+		<% if (user) { %>
+			<span class="form-inline" style="color: white;">Welcome!<a href="/profile" style="color: aqua;">&nbsp;<%= user.username %></a></span>
+			<a href="/logout" class="nav-link nav-login-signup"><i class="fa fa-users" aria-hidden="true"></i> Logout</a>
+		<% } else { %>
+			<a href="/signin" class="nav-link nav-login-signup"><i class="fa fa-user-circle-o" aria-hidden="true"></i>&nbsp;Login</a>
+			<a href="/signup" class="nav-link btn btn-outline-success nav-login-signup"><i class="fa fa-users" aria-hidden="true"></i>&nbsp;Sign Up</a>
+		<% } %>
+	</div>
+</div>
+</nav>

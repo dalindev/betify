@@ -1,0 +1,25 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+
+<div>
+	<ul id="messages"></ul>
+
+  <form class="betify-chatroom" action="">
+    <input id="m" autocomplete="off" /><button>Send</button>
+  </form>
+</div>
+
+<script>
+  $(function () {
+    var socket = io();
+    $('form').submit(function(){
+      socket.emit('main chatroom', $('#m').val());
+      $('#m').val('');
+      return false;
+    });
+    socket.on('main chatroom', function(data){
+        console.log(data);
+        $('#messages').append($('<li>').text(`${data.user_name} : ${data.msg}`));
+        window.scrollTo(0, document.body.scrollHeight);
+    });
+  });
+</script>

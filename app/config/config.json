@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "root",
+    "password": "farmlead",
+    "database": "betify_db",
+    "host": "localhost",
+    "dialect": "mysql"
+  },
+  "test": {
+    "username": "",
+    "password": null,
+    "database": "",
+    "host": "",
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "",
+    "password": null,
+    "database": "",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  }
+}
