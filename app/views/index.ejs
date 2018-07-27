@@ -18,10 +18,10 @@
 
   <div class="" style="min-height:40vh; margin-bottom: 50px;">
     <div class="row">
-      <!-- <div class="chart-container col-7">
+      <div class="chart-container col-md-7">
         <canvas id="myChart"></canvas>
-      </div> -->
-      <div class="col-5">
+      </div>
+      <div class="col-md-5">
         <div>
           Start: <span id="startBtcPrice"></span>
         </div>
@@ -33,8 +33,16 @@
         </div>
         <hr>
         <div class="row">
-          <div class="col-6"><button class="btn btn-success" id="bet_btc_up" data-bet="up">Going Up</button></div>
-          <div class="col-6"><button class="btn btn-danger" id="bet_btc_down" data-bet="down">Going Down</button></div>
+          <div class="col-md-12">
+            <input type="number" min="1" step="1" id="bet_value" value="1000">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6"><button class="btn btn-success" id="bet_btc_up" data-bet-type="up" data-game-type="BTCUSDT">Going Up</button></div>
+          <div class="col-md-6"><button class="btn btn-danger" id="bet_btc_down" data-bet-type="down" data-game-type="BTCUSDT">Going Down</button></div>
+        </div>
+        <div class="row">
+          <div id="display_current_bets"></div>
         </div>
       </div>
     </div>
@@ -68,15 +76,17 @@
     };
 
     $('#bet_btc_up, #bet_btc_down').on('click', function () {
-      let bet_tp = $(this).data('bet');
+      let game_type = $(this).data('game-type')
+      let bet_type = $(this).data('bet-type');
+      let bet_value = $('#bet_value').val();
 
       postData(`/games/placebet`, {
           game_id: 99999,
           game_type: 'BTCUSDT',
-          bet_type: bet_tp,
-          bet_value: 150,
+          bet_type: bet_type,
+          bet_value: bet_value,
         })
-        .then(response => console.log('Success:', response));
+        .then(response => $('#display_current_bets').text(`${JSON.stringify(response)}`) );
     });
 
     /*
