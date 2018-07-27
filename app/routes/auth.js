@@ -1,4 +1,5 @@
 var authController = require('../controllers/authcontroller.js');
+var gameController = require('../controllers/gamecontroller.js');
 
 module.exports = function(app,passport){
 
@@ -32,8 +33,14 @@ module.exports = function(app,passport){
 
 
   // put game bet
-  app.post('/games/placebet',isLoggedIn, authController.placebet);
+  app.post('/games/placebet', gameController.placebet);
+  // app.post('/games/placebet',isLoggedIn, gameController.placebet);
 
+
+
+  /*
+    Functions
+  */
 
   function isLoggedIn(req, res, next) {
     if (req.isAuthenticated())
@@ -41,6 +48,5 @@ module.exports = function(app,passport){
 
     res.redirect('/login');
   }
-
 
 }

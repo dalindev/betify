@@ -79,7 +79,7 @@ var models = require("./app/models");
 
 //Routes
 var authRoute = require('./app/routes/auth.js')(app,passport);
-var betsRoute = require('./app/routes/bets.js')(app,passport);
+// var betsRoute = require('./app/routes/bets.js')(app,passport);
 
 
 //load passport strategies
