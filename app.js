@@ -139,7 +139,7 @@ var gameTimeCounter = new Date().getTime();
 var gameStartBtcPrice = 0
 var gameEndBtcPrice = 0
 
-/*
+
 
 // For a specific symbol:
 binance.websockets.prevDay('BTCUSDT', (error, response) => {
@@ -235,6 +235,6 @@ var broadcast = function (time, close, gameTimeCounter, startBtcPrice, endBtcPri
   })
 }
 
-*/
+
 
 

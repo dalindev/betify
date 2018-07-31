@@ -73,6 +73,10 @@ app.get('/', function (req, res) {
 });
 
 
+// app.use(express.static(path.resolve(__dirname, '/public')))
+app.use(express.static(__dirname));
+
+
 //Models
 var models = require("./app/models");
 
@@ -142,7 +146,118 @@ io.on('connection', function(socket){
 });
 
 
-// app.use(express.static(path.resolve(__dirname, '/public')))
-app.use(express.static(__dirname));
+
+
+// ===============================================================================
+// Binance API / webSocket
+
+
+const binance = require('node-binance-api')
+binance.options({
+  APIKEY: '<key>',
+  APISECRET: '<secret>',
+  useServerTime: true, // If you get timestamp errors, synchronize to server time at startup
+  test: false // If you want to use sandbox mode where orders are simulated
+})
+
+// --------- BTCUSDT ---------
+var gameTimeCounter = new Date().getTime();
+var gameStartBtcPrice = 0
+var gameEndBtcPrice = 0
+
+
+// For a specific symbol:
+binance.websockets.prevDay('BTCUSDT', (error, response) => {
+  // var t = new Date( response.eventTime );
+  // var formatted = t.format("dd.mm.yyyy hh:MM:ss");
+  if (error) throw error
+
+  // console.log(response);
+
+  // save to database
+  if (response.symbol &&
+      response.close &&
+      response.closeTime &&
+      response.closeQty &&
+      response.eventTime
+  ) {
+    let closeTime = moment(response.closeTime).format('HH:mm:ss')
+    let closePrice = response.close
+    let eventTime = response.eventTime
+
+    // console.log(gameTimeCounter);
+    // console.log(eventTime);
+    // console.log(gameTimeCounter < eventTime);
+
+    // game loop counter
+    if (gameTimeCounter <= eventTime) {
+      gameStartBtcPrice = closePrice;
+      gameEndBtcPrice = closePrice;
+      gameTimeCounter = gameTimeCounter + 10*1000;
+
+      let gameId = Math.round(eventTime/1000);
+
+      let btcusdtMysql = {
+        exchange_name: 'Binance',
+        symbol: response.symbol,
+        close_price: response.close,
+        close_time: response.closeTime,
+        game_time_counter: gameId,
+        close_qty: response.closeQty
+      }
+
+      let insertQuery = `INSERT INTO
+                  btcusdt_table (
+                    exchange_name,
+                    symbol,
+                    close_price,
+                    close_time,
+                    game_time_counter,
+                    close_qty
+                  ) values (?,?,?,?,?,?)`
+      connection.query(
+        insertQuery, [
+          btcusdtMysql.exchange_name,
+          btcusdtMysql.symbol,
+          btcusdtMysql.close_price,
+          btcusdtMysql.close_time,
+          btcusdtMysql.game_time_counter,
+          btcusdtMysql.close_qty
+        ], function (err, rows) {
+          if (err) {
+            console.log('error save btcusdt_table --------->' + err)
+          } else {
+            // console.log(response);
+            connection.query('SELECT id FROM btcusdt_table ORDER BY id DESC LIMIT 1', function (error, results, fields) {
+              if (error) throw error
+              // res.end(
+              JSON.stringify('error ' + results)
+              // );
+            })
+            // console.log(JSON.stringify('res--> ' + results));
+            broadcast('BET', closePrice, 0, gameStartBtcPrice, gameEndBtcPrice)
+          }
+        })
+    } else {
+      broadcast('', closePrice, 10, gameStartBtcPrice, gameEndBtcPrice)
+    }
+  }
+})
+
+// Every three seconds broadcast "{ message: 'Hello hello!' }" to all connected clients
+var broadcast = function (time, close, gameTimeCounter, startBtcPrice, endBtcPrice) {
+  var json = JSON.stringify({
+    eventTime: time,
+    close: close,
+    gameTimeCounter: gameTimeCounter,
+    startBtcPrice: startBtcPrice,
+    endBtcPrice: endBtcPrice
+  })
+
+  clients.forEach(function (stream) {
+    stream.send(json)
+    // console.log('Sent: ' + json);
+  })
+}
 
 

@@ -27,6 +27,8 @@ exports.placebet = function(req,res){
           let response = bets.get();
           response.balance = updated_user.balance;
 
+          User.findById(req.user.id)
+
           res.setHeader('Content-Type', 'application/json');
           res.send(response);
         })
