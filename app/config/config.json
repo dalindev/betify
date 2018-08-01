@@ -4,20 +4,23 @@
     "password": "farmlead",
     "database": "betify_db",
     "host": "localhost",
-    "dialect": "mysql"
+    "dialect": "mysql",
+    "logging": false
   },
   "test": {
     "username": "",
     "password": null,
     "database": "",
     "host": "",
-    "dialect": "mysql"
+    "dialect": "mysql",
+    "logging": false
   },
   "production": {
     "username": "",
     "password": null,
     "database": "",
     "host": "127.0.0.1",
-    "dialect": "mysql"
+    "dialect": "mysql",
+    "logging": false
   }
 }

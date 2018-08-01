@@ -4,8 +4,10 @@ module.exports = function(sequelize, Sequelize) {
     id: { autoIncrement: true, primaryKey: true, type: Sequelize.INTEGER},
     exchange_name: { type: Sequelize.STRING,notEmpty: true},
     symbol: { type: Sequelize.STRING,notEmpty: true},
-    close_price: { type: Sequelize.FLOAT,notEmpty: true},
     game_id : { type:Sequelize.INTEGER},
+    start_price: { type: Sequelize.FLOAT,notEmpty: true},
+    close_price: { type: Sequelize.FLOAT,notEmpty: true},
+    price_diff: { type: Sequelize.FLOAT,notEmpty: true},
     close_time: { type:Sequelize.DATE}
   });
 

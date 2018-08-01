@@ -36,7 +36,7 @@ exports.placebet = function(req,res){
       })
   } else {
     res.setHeader('Content-Type', 'application/json');
-    res.send({msg: "something is wrong"});
+    res.send({msg: "You are not logged in or does not have enought balance."});
   }
 
   // User.findOne({where: {email:email}}).then(function(bet){
