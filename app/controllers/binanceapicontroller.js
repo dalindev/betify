@@ -49,7 +49,7 @@ module.exports = function(models,clients){
         gameEndBtcPrice = closePrice;
         gameTimer = gameTimer + 10*1000;
 
-        let price_dif = gameStartBtcPrice - gameEndBtcPrice;
+        let price_dif = gameEndBtcPrice - gameStartBtcPrice;
         let new_gameId = Math.round(gameTimer/1000);
 
         Btcusdt.create({
@@ -65,7 +65,6 @@ module.exports = function(models,clients){
           broadcast('BET', closePrice, nextBetCountDown, gameStartBtcPrice, gameEndBtcPrice, price_dif, new_gameId)
 
           gameId = new_gameId;
-
 
           // new game started
           gameStartBtcPrice = closePrice;
