@@ -104,7 +104,6 @@
       es.onmessage = function (event) {
       let data = JSON.parse(event.data);
       let cpColor = '#F7931A';
-      let currentGameId = $('#nextGameId').data('game-id');
 
       // new game started
       if(data.eventTime == 'BET'){

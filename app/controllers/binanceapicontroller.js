@@ -47,8 +47,8 @@ module.exports = function(models,clients){
       if (thisGameId*1000 <= eventTime) {
         gameEndBtcPrice = closePrice;
 
-        let price_dif = gameEndBtcPrice - gameStartBtcPrice;
-        let new_gameId = nextGameId;
+        let price_dif = (gameEndBtcPrice - gameStartBtcPrice).toFixed(8);
+        let new_gameId = thisGameId;
 
         Btcusdt.create({
           exchange_name: 'Binance',
@@ -60,10 +60,10 @@ module.exports = function(models,clients){
           close_time: response.closeTime
         }).then(btcusdt => {
 
-          broadcast('BET', closePrice, nextBetCountDown, gameStartBtcPrice, gameEndBtcPrice, price_dif, new_gameId, nextGameId)
-
           thisGameId = nextGameId;
           nextGameId = nextGameId+BTCUSDT_20;
+
+          broadcast('BET', closePrice, nextBetCountDown, gameStartBtcPrice, gameEndBtcPrice, price_dif, thisGameId, nextGameId)
 
           // new game started
           gameStartBtcPrice = closePrice;
