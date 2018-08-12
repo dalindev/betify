@@ -7,6 +7,8 @@ module.exports = function(sequelize, Sequelize) {
     game_type: { type: Sequelize.STRING,allowNull: false},
     bet_type: { type: Sequelize.STRING,allowNull: false},
     bet_value: { type: Sequelize.INTEGER,allowNull: false},
+    game_result: { type: Sequelize.STRING},
+    user_result_balance: { type: Sequelize.INTEGER},
     active: { type: Sequelize.BOOLEAN,defaultValue: true}
   });
 

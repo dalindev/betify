@@ -34,6 +34,9 @@
         <hr>
         <div class="row">
           <div class="col-md-12">
+            <span><b>This Game ID: </b><span id="thisGameId" data-game-id=""></span></span>
+          </div>
+          <div class="col-md-12">
             <span><b>Next Game ID: </b><span id="nextGameId" data-game-id=""></span></span>
           </div>
         </div>
@@ -43,8 +46,8 @@
           </div>
         </div>
         <div class="row">
-          <div class="col-md-6"><button class="btn btn-success" id="bet_btc_up" data-bet-type="up" data-game-type="BTCUSDT">Going Up</button></div>
-          <div class="col-md-6"><button class="btn btn-danger" id="bet_btc_down" data-bet-type="down" data-game-type="BTCUSDT">Going Down</button></div>
+          <div class="col-md-6"><button class="btn btn-success" id="bet_btc_up" data-bet-type="up" data-game-type="BTCUSDT10">Going Up</button></div>
+          <div class="col-md-6"><button class="btn btn-danger" id="bet_btc_down" data-bet-type="down" data-game-type="BTCUSDT10">Going Down</button></div>
         </div>
         <div class="row">
           <div id="display_current_bets"></div>
@@ -88,7 +91,7 @@
 
       postData(`/games/placebet`, {
           game_id: next_game_id,
-          game_type: 'BTCUSDT',
+          game_type: game_type,
           bet_type: bet_type,
           bet_value: bet_value,
         })
@@ -101,9 +104,10 @@
       es.onmessage = function (event) {
       let data = JSON.parse(event.data);
       let cpColor = '#F7931A';
+      let currentGameId = $('#nextGameId').data('game-id');
 
       // new game started
-      if(data.priceDif){
+      if(data.eventTime == 'BET'){
         cpColor = '#7FFF00';
 
         let ele_CBP = $('#changeBtcPrice');
@@ -119,7 +123,8 @@
         $('#startBtcPrice').text(data.startBtcPrice);
         $('#endBtcPrice').text(data.endBtcPrice);
         $('#changeBtcPrice').text(changeBtcPrice);
-        $('#nextGameId').data('game-id', data.gameId).text(data.gameId);
+        $('#thisGameId').data('game-id', data.thisGameId).text(data.thisGameId);
+        $('#nextGameId').data('game-id', data.nextGameId).text(data.nextGameId);
 
       }
 

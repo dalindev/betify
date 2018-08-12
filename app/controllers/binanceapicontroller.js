@@ -13,10 +13,13 @@ module.exports = function(models,clients){
   })
 
   // --------- BTCUSDT ---------
+  const BTCUSDT_20 = 10;
+
   var Btcusdt = models.btcusdt_table;
 
-  var gameTimer = new Date().getTime();
-  var gameId = Math.round(gameTimer/1000);
+  var initTimer = new Date().getTime() + BTCUSDT_20*1000;
+  var thisGameId = Math.round(initTimer/1000);
+  var nextGameId = thisGameId+BTCUSDT_20;
   var gameStartBtcPrice = 0;
   var gameEndBtcPrice = 0;
 
@@ -35,22 +38,17 @@ module.exports = function(models,clients){
         response.eventTime
     ) {
       let closeTime = moment(response.closeTime).format('HH:mm:ss')
-      let closePrice = response.close
+      let closePrice = +response.close
       let eventTime = response.eventTime
       // count down before next game
-      let nextBetCountDown = gameTimer - eventTime;
-
-      // console.log(gameTimer);
-      // console.log(eventTime);
-      // console.log(gameTimer < eventTime);
+      let nextBetCountDown = thisGameId*1000 - eventTime;
 
       // game loop counter
-      if (gameTimer <= eventTime) {
+      if (thisGameId*1000 <= eventTime) {
         gameEndBtcPrice = closePrice;
-        gameTimer = gameTimer + 10*1000;
 
         let price_dif = gameEndBtcPrice - gameStartBtcPrice;
-        let new_gameId = Math.round(gameTimer/1000);
+        let new_gameId = nextGameId;
 
         Btcusdt.create({
           exchange_name: 'Binance',
@@ -62,22 +60,23 @@ module.exports = function(models,clients){
           close_time: response.closeTime
         }).then(btcusdt => {
 
-          broadcast('BET', closePrice, nextBetCountDown, gameStartBtcPrice, gameEndBtcPrice, price_dif, new_gameId)
+          broadcast('BET', closePrice, nextBetCountDown, gameStartBtcPrice, gameEndBtcPrice, price_dif, new_gameId, nextGameId)
 
-          gameId = new_gameId;
+          thisGameId = nextGameId;
+          nextGameId = nextGameId+BTCUSDT_20;
 
           // new game started
           gameStartBtcPrice = closePrice;
         })
 
       } else {
-        broadcast('', closePrice, nextBetCountDown, gameStartBtcPrice, gameEndBtcPrice, '', gameId)
+        broadcast('', closePrice, nextBetCountDown, gameStartBtcPrice, gameEndBtcPrice, '', thisGameId, nextGameId)
       }
     }
   })
 
   // Every three seconds broadcast "{ message: 'Hello hello!' }" to all connected clients
-  var broadcast = function (time, close, nextBetCountDown, startBtcPrice, endBtcPrice, priceDif, gameId) {
+  var broadcast = function (time, close, nextBetCountDown, startBtcPrice, endBtcPrice, priceDif, thisGameId, nextGameId) {
     var json = JSON.stringify({
       eventTime: time,
       close: close,
@@ -85,7 +84,8 @@ module.exports = function(models,clients){
       startBtcPrice: startBtcPrice,
       endBtcPrice: endBtcPrice,
       priceDif: priceDif,
-      gameId: gameId
+      thisGameId: thisGameId,
+      nextGameId: nextGameId
     })
 
     console.log('json----' + json);
