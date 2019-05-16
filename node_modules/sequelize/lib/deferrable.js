@@ -1,7 +1,60 @@
 'use strict';
 
-var util = require('util');
+const { classToInvokable } = require('./utils');
 
+class ABSTRACT {
+  static toString(...args) {
+    return new this().toString(...args);
+  }
+
+  toString(...args) {
+    return this.toSql(...args);
+  }
+
+  toSql() {
+    throw new Error('toSql implementation missing');
+  }
+}
+
+class INITIALLY_DEFERRED extends ABSTRACT {
+  toSql() {
+    return 'DEFERRABLE INITIALLY DEFERRED';
+  }
+}
+
+class INITIALLY_IMMEDIATE extends ABSTRACT {
+  toSql() {
+    return 'DEFERRABLE INITIALLY IMMEDIATE';
+  }
+}
+
+class NOT extends ABSTRACT {
+  toSql() {
+    return 'NOT DEFERRABLE';
+  }
+}
+
+class SET_DEFERRED extends ABSTRACT {
+  constructor(constraints) {
+    super();
+    this.constraints = constraints;
+  }
+
+  toSql(queryGenerator) {
+    return queryGenerator.setDeferredQuery(this.constraints);
+  }
+}
+
+class SET_IMMEDIATE extends ABSTRACT {
+  constructor(constraints) {
+    super();
+    this.constraints = constraints;
+  }
+
+  toSql(queryGenerator) {
+    return queryGenerator.setImmediateQuery(this.constraints);
+  }
+}
 
 /**
  * A collection of properties related to deferrable constraints. It can be used to
@@ -34,122 +87,17 @@ var util = require('util');
  * });
  * ```
  *
- * @return {object}
- */
-var Deferrable = module.exports = {
-  INITIALLY_DEFERRED: INITIALLY_DEFERRED,
-  INITIALLY_IMMEDIATE: INITIALLY_IMMEDIATE,
-  NOT: NOT,
-  SET_DEFERRED: SET_DEFERRED,
-  SET_IMMEDIATE: SET_IMMEDIATE
-};
-
-function ABSTRACT () {}
-
-ABSTRACT.prototype.toString = function () {
-  return this.toSql.apply(this, arguments);
-};
-
-
-/**
- * A property that will defer constraints checks to the end of transactions.
- *
- * @property INITIALLY_DEFERRED
- */
-function INITIALLY_DEFERRED () {
-  if (!(this instanceof INITIALLY_DEFERRED)) {
-    return new INITIALLY_DEFERRED();
-  }
-}
-util.inherits(INITIALLY_DEFERRED, ABSTRACT);
-
-INITIALLY_DEFERRED.prototype.toSql = function () {
-  return 'DEFERRABLE INITIALLY DEFERRED';
-};
-
-
-/**
- * A property that will trigger the constraint checks immediately
- *
- * @property INITIALLY_IMMEDIATE
- */
-function INITIALLY_IMMEDIATE () {
-  if (!(this instanceof INITIALLY_IMMEDIATE)) {
-    return new INITIALLY_IMMEDIATE();
-  }
-}
-util.inherits(INITIALLY_IMMEDIATE, ABSTRACT);
-
-INITIALLY_IMMEDIATE.prototype.toSql = function () {
-  return 'DEFERRABLE INITIALLY IMMEDIATE';
-};
-
-
-/**
- * A property that will set the constraints to not deferred. This is
- * the default in PostgreSQL and it make it impossible to dynamically
- * defer the constraints within a transaction.
- *
- * @property NOT
- */
-function NOT () {
-  if (!(this instanceof NOT)) {
-    return new NOT();
-  }
-}
-util.inherits(NOT, ABSTRACT);
-
-NOT.prototype.toSql = function () {
-  return 'NOT DEFERRABLE';
-};
-
-
-/**
- * A property that will trigger an additional query at the beginning of a
- * transaction which sets the constraints to deferred.
- *
- * @param  {Array} constraints An array of constraint names. Will defer all constraints by default.
+ * @property INITIALLY_DEFERRED Defer constraints checks to the end of transactions.
+ * @property INITIALLY_IMMEDIATE Trigger the constraint checks immediately
+ * @property NOT Set the constraints to not deferred. This is the default in PostgreSQL and it make it impossible to dynamically defer the constraints within a transaction.
  * @property SET_DEFERRED
- */
-function SET_DEFERRED (constraints) {
-  if (!(this instanceof SET_DEFERRED)) {
-    return new SET_DEFERRED(constraints);
-  }
-
-  this.constraints = constraints;
-}
-util.inherits(SET_DEFERRED, ABSTRACT);
-
-SET_DEFERRED.prototype.toSql = function (queryGenerator) {
-  return queryGenerator.setDeferredQuery(this.constraints);
-};
-
-
-/**
- * A property that will trigger an additional query at the beginning of a
- * transaction which sets the constraints to immediately.
- *
- * @param  {Array} constraints An array of constraint names. Will defer all constraints by default.
  * @property SET_IMMEDIATE
  */
-function SET_IMMEDIATE (constraints) {
-  if (!(this instanceof SET_IMMEDIATE)) {
-    return new SET_IMMEDIATE(constraints);
-  }
 
-  this.constraints = constraints;
-}
-util.inherits(SET_IMMEDIATE, ABSTRACT);
-
-SET_IMMEDIATE.prototype.toSql = function (queryGenerator) {
-  return queryGenerator.setImmediateQuery(this.constraints);
+const Deferrable = module.exports = { // eslint-disable-line
+  INITIALLY_DEFERRED: classToInvokable(INITIALLY_DEFERRED),
+  INITIALLY_IMMEDIATE: classToInvokable(INITIALLY_IMMEDIATE),
+  NOT: classToInvokable(NOT),
+  SET_DEFERRED: classToInvokable(SET_DEFERRED),
+  SET_IMMEDIATE: classToInvokable(SET_IMMEDIATE)
 };
-
-Object.keys(Deferrable).forEach(function (key) {
-  var DeferrableType = Deferrable[key];
-
-  DeferrableType.toString = function () {
-    var instance = new DeferrableType();
-    return instance.toString.apply(instance, arguments);
-  };
-});

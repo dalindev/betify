@@ -5,63 +5,64 @@
 
  @class QueryInterface
  @static
+ @private
  */
 
 /**
   A wrapper that fixes MSSQL's inability to cleanly remove columns from existing tables if they have a default constraint.
 
-  @method removeColumn
-  @for    QueryInterface
 
-  @param  {String} tableName     The name of the table.
-  @param  {String} attributeName The name of the attribute that we want to remove.
+  @param  {QueryInterface} qi
+  @param  {string} tableName     The name of the table.
+  @param  {string} attributeName The name of the attribute that we want to remove.
   @param  {Object} options
-  @param  {Boolean|Function} [options.logging] A function that logs the sql queries, or false for explicitly not logging these queries
- */
-var removeColumn = function (tableName, attributeName, options) {
-  var self = this;
-  options = options || {};
+  @param  {boolean|Function} [options.logging] A function that logs the sql queries, or false for explicitly not logging these queries
 
-  var findConstraintSql = self.QueryGenerator.getDefaultConstraintQuery(tableName, attributeName);
-  return self.sequelize.query(findConstraintSql, { raw: true, logging: options.logging})
-    .spread(function (results) {
+  @private
+ */
+const removeColumn = function(qi, tableName, attributeName, options) {
+  options = Object.assign({ raw: true }, options || {});
+
+  const findConstraintSql = qi.QueryGenerator.getDefaultConstraintQuery(tableName, attributeName);
+  return qi.sequelize.query(findConstraintSql, options)
+    .then(([results]) => {
       if (!results.length) {
         // No default constraint found -- we can cleanly remove the column
         return;
       }
-      var dropConstraintSql = self.QueryGenerator.dropConstraintQuery(tableName, results[0].name);
-      return self.sequelize.query(dropConstraintSql, { raw: true, logging: options.logging});
+      const dropConstraintSql = qi.QueryGenerator.dropConstraintQuery(tableName, results[0].name);
+      return qi.sequelize.query(dropConstraintSql, options);
     })
-    .then(function () {
-      var findForeignKeySql = self.QueryGenerator.getForeignKeyQuery(tableName, attributeName);
-      return self.sequelize.query(findForeignKeySql , { raw: true, logging: options.logging});
+    .then(() => {
+      const findForeignKeySql = qi.QueryGenerator.getForeignKeyQuery(tableName, attributeName);
+      return qi.sequelize.query(findForeignKeySql, options);
     })
-    .spread(function (results) {
+    .then(([results]) => {
       if (!results.length) {
         // No foreign key constraints found, so we can remove the column
         return;
       }
-      var dropForeignKeySql = self.QueryGenerator.dropForeignKeyQuery(tableName, results[0].constraint_name);
-      return self.sequelize.query(dropForeignKeySql , { raw: true, logging: options.logging});
+      const dropForeignKeySql = qi.QueryGenerator.dropForeignKeyQuery(tableName, results[0].constraint_name);
+      return qi.sequelize.query(dropForeignKeySql, options);
     })
-    .then(function() {
+    .then(() => {
       //Check if the current column is a primaryKey
-      var primaryKeyConstraintSql = self.QueryGenerator.getPrimaryKeyConstraintQuery(tableName, attributeName);
-      return self.sequelize.query(primaryKeyConstraintSql, { raw: true, logging: options.logging });
+      const primaryKeyConstraintSql = qi.QueryGenerator.getPrimaryKeyConstraintQuery(tableName, attributeName);
+      return qi.sequelize.query(primaryKeyConstraintSql, options);
     })
-    .spread(function(result) {
+    .then(([result]) => {
       if (!result.length) {
         return;
       }
-      var dropConstraintSql = self.QueryGenerator.dropConstraintQuery(tableName, result[0].constraintName);
-      return self.sequelize.query(dropConstraintSql, { raw: true, logging: options.logging});
+      const dropConstraintSql = qi.QueryGenerator.dropConstraintQuery(tableName, result[0].constraintName);
+      return qi.sequelize.query(dropConstraintSql, options);
     })
-    .then(function () {
-      var removeSql = self.QueryGenerator.removeColumnQuery(tableName, attributeName);
-      return self.sequelize.query(removeSql, { raw: true, logging: options.logging});
+    .then(() => {
+      const removeSql = qi.QueryGenerator.removeColumnQuery(tableName, attributeName);
+      return qi.sequelize.query(removeSql, options);
     });
 };
 
 module.exports = {
-  removeColumn: removeColumn
+  removeColumn
 };

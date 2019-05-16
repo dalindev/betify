@@ -1,145 +1,159 @@
 'use strict';
 
-var AbstractConnectionManager = require('../abstract/connection-manager')
-  , ConnectionManager
-  , Utils = require('../../utils')
-  , Promise = require('../../promise')
-  , sequelizeErrors = require('../../errors')
-  , dataTypes = require('../../data-types').mysql
-  , parserMap = {};
+const AbstractConnectionManager = require('../abstract/connection-manager');
+const SequelizeErrors = require('../../errors');
+const Promise = require('../../promise');
+const { logger } = require('../../utils/logger');
+const DataTypes = require('../../data-types').mysql;
+const momentTz = require('moment-timezone');
+const debug = logger.debugContext('connection:mysql');
+const parserStore = require('../parserStore')('mysql');
 
-ConnectionManager = function(dialect, sequelize) {
-  AbstractConnectionManager.call(this, dialect, sequelize);
+/**
+ * MySQL Connection Manager
+ *
+ * Get connections, validate and disconnect them.
+ * AbstractConnectionManager pooling use it to handle MySQL specific connections
+ * Use https://github.com/sidorares/node-mysql2 to connect with MySQL server
+ *
+ * @extends AbstractConnectionManager
+ * @returns Class<ConnectionManager>
+ * @private
+ */
 
-  this.sequelize = sequelize;
-  this.sequelize.config.port = this.sequelize.config.port || 3306;
-  try {
-    if (sequelize.config.dialectModulePath) {
-      this.lib = require(sequelize.config.dialectModulePath);
-    } else {
-      this.lib = require('mysql');
-    }
-  } catch (err) {
-    if (err.code === 'MODULE_NOT_FOUND') {
-      throw new Error('Please install mysql package manually');
-    }
-    throw err;
+class ConnectionManager extends AbstractConnectionManager {
+  constructor(dialect, sequelize) {
+    sequelize.config.port = sequelize.config.port || 3306;
+    super(dialect, sequelize);
+    this.lib = this._loadDialectModule('mysql2');
+    this.refreshTypeParser(DataTypes);
   }
 
-  this.refreshTypeParser(dataTypes);
-};
-
-Utils._.extend(ConnectionManager.prototype, AbstractConnectionManager.prototype);
-
-// Expose this as a method so that the parsing may be updated when the user has added additional, custom types
-ConnectionManager.prototype.$refreshTypeParser = function (dataType) {
-  dataType.types.mysql.forEach(function (type) {
-    parserMap[type] = dataType.parse;
-  });
-};
-
-ConnectionManager.prototype.$clearTypeParser = function () {
-  parserMap = {};
-};
-
-ConnectionManager.$typecast = function (field, next) {
-  if (parserMap[field.type]) {
-    return parserMap[field.type](field, this.sequelize.options);
+  _refreshTypeParser(dataType) {
+    parserStore.refresh(dataType);
   }
 
-  return next();
-};
+  _clearTypeParser() {
+    parserStore.clear();
+  }
 
-ConnectionManager.prototype.connect = function(config) {
-  var self = this;
-  return new Promise(function (resolve, reject) {
-    var connectionConfig = {
+  static _typecast(field, next) {
+    if (parserStore.get(field.type)) {
+      return parserStore.get(field.type)(field, this.sequelize.options, next);
+    }
+    return next();
+  }
+
+  /**
+   * Connect with MySQL database based on config, Handle any errors in connection
+   * Set the pool handlers on connection.error
+   * Also set proper timezone once connection is connected.
+   *
+   * @param {Object} config
+   * @returns {Promise<Connection>}
+   * @private
+   */
+  connect(config) {
+    const connectionConfig = Object.assign({
       host: config.host,
       port: config.port,
       user: config.username,
       flags: '-FOUND_ROWS',
       password: config.password,
       database: config.database,
-      timezone: self.sequelize.options.timezone,
-      typeCast: ConnectionManager.$typecast.bind(self)
-    };
+      timezone: this.sequelize.options.timezone,
+      typeCast: ConnectionManager._typecast.bind(this),
+      bigNumberStrings: false,
+      supportBigNumbers: true
+    }, config.dialectOptions);
 
-    if (config.dialectOptions) {
-      Object.keys(config.dialectOptions).forEach(function(key) {
-        connectionConfig[key] = config.dialectOptions[key];
-      });
-    }
+    return new Promise((resolve, reject) => {
+      const connection = this.lib.createConnection(connectionConfig);
 
-    var connection = self.lib.createConnection(connectionConfig);
+      const errorHandler = e => {
+        // clean up connect & error event if there is error
+        connection.removeListener('connect', connectHandler);
+        connection.removeListener('error', connectHandler);
+        reject(e);
+      };
 
-    connection.connect(function(err) {
-      if (err) {
-        if (err.code) {
-          switch (err.code) {
-          case 'ECONNREFUSED':
-            reject(new sequelizeErrors.ConnectionRefusedError(err));
-            break;
-          case 'ER_ACCESS_DENIED_ERROR':
-            reject(new sequelizeErrors.AccessDeniedError(err));
-            break;
-          case 'ENOTFOUND':
-            reject(new sequelizeErrors.HostNotFoundError(err));
-            break;
-          case 'EHOSTUNREACH':
-            reject(new sequelizeErrors.HostNotReachableError(err));
-            break;
-          case 'EINVAL':
-            reject(new sequelizeErrors.InvalidConnectionError(err));
-            break;
-          default:
-            reject(new sequelizeErrors.ConnectionError(err));
-            break;
-          }
-        } else {
-          reject(new sequelizeErrors.ConnectionError(err));
-        }
+      const connectHandler = () => {
+        // clean up error event if connected
+        connection.removeListener('error', errorHandler);
+        resolve(connection);
+      };
 
-        return;
-      }
-
-      if (config.pool.handleDisconnects) {
-        // Connection to the MySQL server is usually
-        // lost due to either server restart, or a
-        // connnection idle timeout (the wait_timeout
-        // server variable configures this)
-        //
-        // See [stackoverflow answer](http://stackoverflow.com/questions/20210522/nodejs-mysql-error-connection-lost-the-server-closed-the-connection)
-        connection.on('error', function (err) {
-          if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-            // Remove it from read/write pool
-            self.pool.destroy(connection);
+      // don't use connection.once for error event handling here
+      // mysql2 emit error two times in case handshake was failed
+      // first error is protocol_lost and second is timeout
+      // if we will use `once.error` node process will crash on 2nd error emit
+      connection.on('error', errorHandler);
+      connection.once('connect', connectHandler);
+    })
+      .tap(() => { debug('connection acquired'); })
+      .then(connection => {
+        connection.on('error', error => {
+          switch (error.code) {
+            case 'ESOCKET':
+            case 'ECONNRESET':
+            case 'EPIPE':
+            case 'PROTOCOL_CONNECTION_LOST':
+              this.pool.destroy(connection);
           }
         });
-      }
-      resolve(connection);
-    });
 
-  }).tap(function (connection) {
-    connection.query("SET time_zone = '" + self.sequelize.options.timezone + "'"); /* jshint ignore: line */
-  });
-};
-ConnectionManager.prototype.disconnect = function(connection) {
+        return new Promise((resolve, reject) => {
+          if (!this.sequelize.config.keepDefaultTimezone) {
+            // set timezone for this connection
+            // but named timezone are not directly supported in mysql, so get its offset first
+            let tzOffset = this.sequelize.options.timezone;
+            tzOffset = /\//.test(tzOffset) ? momentTz.tz(tzOffset).format('Z') : tzOffset;
+            return connection.query(`SET time_zone = '${tzOffset}'`, err => {
+              if (err) { reject(err); } else { resolve(connection); }
+            });
+          }
 
-  // Dont disconnect connections with an ended protocol
-  // That wil trigger a connection error
-  if (connection._protocol._ended) {
-    return Promise.resolve();
+          // return connection without executing SET time_zone query
+          resolve(connection);
+        });
+      })
+      .catch(err => {
+        switch (err.code) {
+          case 'ECONNREFUSED':
+            throw new SequelizeErrors.ConnectionRefusedError(err);
+          case 'ER_ACCESS_DENIED_ERROR':
+            throw new SequelizeErrors.AccessDeniedError(err);
+          case 'ENOTFOUND':
+            throw new SequelizeErrors.HostNotFoundError(err);
+          case 'EHOSTUNREACH':
+            throw new SequelizeErrors.HostNotReachableError(err);
+          case 'EINVAL':
+            throw new SequelizeErrors.InvalidConnectionError(err);
+          default:
+            throw new SequelizeErrors.ConnectionError(err);
+        }
+      });
   }
 
-  return new Promise(function (resolve, reject) {
-    connection.end(function(err) {
-      if (err) return reject(new sequelizeErrors.ConnectionError(err));
-      resolve();
-    });
-  });
-};
-ConnectionManager.prototype.validate = function(connection) {
-  return connection && ['disconnected', 'protocol_error'].indexOf(connection.state) === -1;
-};
+  disconnect(connection) {
+    // Don't disconnect connections with CLOSED state
+    if (connection._closing) {
+      debug('connection tried to disconnect but was already at CLOSED state');
+      return Promise.resolve();
+    }
+
+    return Promise.fromCallback(callback => connection.end(callback));
+  }
+
+  validate(connection) {
+    return connection
+      && !connection._fatalError
+      && !connection._protocolError
+      && !connection._closing
+      && !connection.stream.destroyed;
+  }
+}
 
 module.exports = ConnectionManager;
+module.exports.ConnectionManager = ConnectionManager;
+module.exports.default = ConnectionManager;
