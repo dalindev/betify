@@ -1,0 +1,156 @@
+<!-- views/profile.ejs -->
+<!doctype html>
+<html>
+<head>
+	<title>Betify</title>
+	<%- include('header.ejs') %>
+</head>
+<body>
+	<%- include('top-navbar.ejs', {user: user}); %>
+
+	<!-- <div class="container"> -->
+	<div class="container">
+
+		<div class="page-header text-center">
+			<h1>My Profile</h1>
+		</div>
+
+		<div class="row">
+
+			<!-- user info -->
+			<div class="col-md-6">
+				<br>
+				<div class="well">
+					<div class="row">
+						<div class="col h3">User: <%= user.email %></div>
+	    				<div class="col">
+							<a href="/profile/edit" class="btn btn-success pull-right">
+								<i class="fa fa-user fa-lg" aria-hidden="true"></i> Edit My Profile
+							</a>
+	    				</div>
+					</div>
+					<hr>
+					<div>
+						<span>Email</span>: <%= user.email %><br>
+						<span>Lastname</span>: <%= user.lastname %><br>
+						<span>Firstname</span>: <%= user.firstname %><br>
+						<!-- <span>City</span>: <%= user.city %><br>
+						<span>Prov</span>: <%= user.prov %><br>
+						<span>Postal Code</span>: <%= user.postal_code %><br>
+						<span>Country</span>: <%= user.country %><br>
+						<span>Phone/span:</span> <%= user.phone %><br> -->
+						<span>Status</span>: <%= user.status %><br><br>
+
+						<small><span>Register date</span>: <%= user.createdAt %></small><br>
+						<small><span>Last modified</span>: <%= user.updatedAt %></small><br>
+					</div>
+				</div>
+			</div>
+
+
+			<!-- LOCAL INFORMATION -->
+			<div class="col-md-6">
+				<br>
+				<div class="well">
+					<div class="row">
+						<!-- <div class="col h3">Address:</div>
+	    				<div class="col">
+							<a href="/profile/address/add" class="btn btn-success pull-right">
+								<i class="fa fa-map-marker fa-lg" aria-hidden="true"></i> Add Address
+							</a>
+	    				</div> -->
+					</div>
+
+					<table class="table table-bordered">
+
+					<% for(var i=0; i < addresses.length; i++) { %>
+						<div>
+							<hr>
+							<!-- Edit address button -->
+							<a href="/profile/address/edit/<%= addresses[i].uuid %>" class="btn btn-outline-primary btn-sm" style="position: absolute; right: 15px; z-index: 10;">
+								<i class="fa fa-pencil-square-o fa-lg" aria-hidden="true"></i> 编辑地址
+							</a>
+							<!-- Name -->
+							<div class="row">
+								<label class="col-sm-3 col-form-label col-form-label-sm">名字:</label>
+								<div class="col-sm-9">
+									<span class="form-control-sm"><%= addresses[i].address_name %></span>
+								</div>
+							</div>
+							<!-- Primary -->
+							<div class="row">
+								<label class="col-sm-3 col-form-label col-form-label-sm">主要地址:</label>
+								<div class="col-sm-9">
+									<span class="form-control-sm"><%= addresses[i].primary_address %></span>
+								</div>
+							</div>
+							<!-- Country -->
+							<div class="row">
+								<label class="col-sm-3 col-form-label col-form-label-sm">国家:</label>
+								<div class="col-sm-9">
+									<span class="form-control-sm"><%= addresses[i].country %></span>
+								</div>
+							</div>
+							<!-- Address -->
+							<div class="row">
+								<label class="col-sm-3 col-form-label col-form-label-sm">地址:</label>
+								<div class="col-sm-9">
+									<span class="form-control-sm"><%= addresses[i].address %></span>
+								</div>
+							</div>
+							<!-- Address2 -->
+							<div class="row">
+								<label class="col-sm-3 col-form-label col-form-label-sm">地址（第二行）:</label>
+								<div class="col-sm-9">
+									<span class="form-control-sm"><%= addresses[i].address2 %></span>
+								</div>
+							</div>
+							<!-- City -->
+							<div class="row">
+								<label class="col-sm-3 col-form-label col-form-label-sm">城市:</label>
+								<div class="col-sm-9">
+									<span class="form-control-sm"><%= addresses[i].city %></span>
+								</div>
+							</div>
+							<!-- Prov -->
+							<div class="row">
+								<label class="col-sm-3 col-form-label col-form-label-sm">省:</label>
+								<div class="col-sm-9">
+									<span class="form-control-sm"><%= addresses[i].prov %></span>
+								</div>
+							</div>
+							<!-- Postal Code -->
+							<div class="row">
+								<label class="col-sm-3 col-form-label col-form-label-sm">邮政编码:</label>
+								<div class="col-sm-9">
+									<span class="form-control-sm"><%= addresses[i].postal_code %></span>
+								</div>
+							</div>
+							<!-- Prov -->
+							<div class="row">
+								<label class="col-sm-3 col-form-label col-form-label-sm">电话／手机:</label>
+								<div class="col-sm-9">
+									<span class="form-control-sm"><%= addresses[i].phone %></span>
+								</div>
+							</div>
+						</div>
+					<% } %>
+				</div>
+			</div>
+
+			<!-- LOGIN FORM -->
+	<!-- 		<form action="/signup" method="post">
+				<div class="form-group">
+					<label>Username</label>
+					<input type="text" class="form-control" name="username">
+				</div>
+				<button type="submit" class="btn btn-info">Update</button>
+			</form> -->
+
+		</div>
+
+	</div>
+
+<%- include('main-js.ejs') %>
+</body>
+</html>

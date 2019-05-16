@@ -1,0 +1,203 @@
+<!-- views/index.ejs -->
+<!doctype html>
+<html>
+
+<head>
+  <title>Betify</title>
+  <%- include('header.ejs') %>
+
+  <style>
+
+    </style>
+</head>
+
+<body>
+  <%- include('top-navbar.ejs', {user: user}); %>
+
+  <%- include('main-js.ejs') %>
+
+  <div class="" style="min-height:40vh; margin-bottom: 50px;">
+    <div class="row">
+      <div class="chart-container col-md-7">
+        <canvas id="myChart"></canvas>
+      </div>
+      <div class="col-md-5">
+        <div>
+          Start: <span id="startBtcPrice"></span>
+        </div>
+        <div>
+          End: <span id="endBtcPrice"></span>
+        </div>
+        <div>
+          Change: <span id="changeBtcPrice" style="color: white;"></span>
+        </div>
+        <hr>
+        <div class="row">
+          <div class="col-md-12">
+            <span><b>This Game ID: </b><span id="thisGameId" data-game-id=""></span></span>
+          </div>
+          <div class="col-md-12">
+            <span><b>Next Game ID: </b><span id="nextGameId" data-game-id=""></span></span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12">
+            <input type="number" min="1" step="1" id="bet_value" value="1000">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6"><button class="btn btn-success" id="bet_btc_up" data-bet-type="up" data-game-type="BTCUSDT10">Going Up</button></div>
+          <div class="col-md-6"><button class="btn btn-danger" id="bet_btc_down" data-bet-type="down" data-game-type="BTCUSDT10">Going Down</button></div>
+        </div>
+        <div class="row">
+          <div id="display_current_bets"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%- include('chat-room.ejs', {user: user}); %>
+
+  <!-- ======================================================================================= -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.bundle.min.js"></script>
+
+  <script type="text/javascript">
+  $(function() {
+
+    const postData = (url = ``, data = {}) => {
+      // Default options are marked with *
+        return fetch(url, {
+            method: "POST", // *GET, POST, PUT, DELETE, etc.
+            mode: "cors", // no-cors, cors, *same-origin
+            cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+            credentials: "same-origin", // include, same-origin, *omit
+            headers: {
+                "Content-Type": "application/json; charset=utf-8",
+                // "Content-Type": "application/x-www-form-urlencoded",
+            },
+            redirect: "follow", // manual, *follow, error
+            referrer: "no-referrer", // no-referrer, *client
+            body: JSON.stringify(data), // body data type must match "Content-Type" header
+        })
+        .then(response => response.json()) // parses response to JSON
+        .catch(error => console.error(`Fetch Error =\n`, error));
+    };
+
+    $('#bet_btc_up, #bet_btc_down').on('click', function () {
+      let game_type = $(this).data('game-type')
+      let bet_type = $(this).data('bet-type');
+      let bet_value = $('#bet_value').val();
+      let next_game_id = $('#nextGameId').data('game-id');
+
+      postData(`/games/placebet`, {
+          game_id: next_game_id,
+          game_type: game_type,
+          bet_type: bet_type,
+          bet_value: bet_value,
+        })
+        .then(response => $('#display_current_bets').text(`${JSON.stringify(response)}`) );
+    });
+
+
+    // binance data stream
+    var es = new EventSource("/sse");
+      es.onmessage = function (event) {
+      let data = JSON.parse(event.data);
+      let cpColor = '#F7931A';
+
+      // new game started
+      if(data.eventTime == 'BET'){
+        cpColor = '#7FFF00';
+
+        let ele_CBP = $('#changeBtcPrice');
+        let changeBtcPrice = data.priceDif;
+        if(changeBtcPrice > 0){
+          ele_CBP.css('background', 'green');
+        }else if(changeBtcPrice < 0){
+          ele_CBP.css('background', 'red');
+        }else{
+          ele_CBP.css('background', 'black');
+        }
+
+        $('#startBtcPrice').text(data.startBtcPrice);
+        $('#endBtcPrice').text(data.endBtcPrice);
+        $('#changeBtcPrice').text(changeBtcPrice);
+        $('#thisGameId').data('game-id', data.thisGameId).text(data.thisGameId);
+        $('#nextGameId').data('game-id', data.nextGameId).text(data.nextGameId);
+
+      }
+
+      moveData(myChart, data.eventTime, data.close, cpColor);
+    };
+
+    // Enable pusher logging - don't include this in production
+
+    var ctx = document.getElementById("myChart").getContext('2d');
+    var myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'BTCUSD',
+                data: [],
+                backgroundColor: 'rgba(55, 99, 132, 0.1)',
+                pointBackgroundColor: [],
+                borderColor: ['#F7931A'],
+                borderWidth: 2,
+                fill: true,
+                lineTension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            animation: {
+              duration: 1000,
+              easing: 'linear'
+            },
+            scales: {
+                xAxes: [{
+                    display: true
+                }],
+                yAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'BTCUSDT'
+                    },
+                    ticks: {
+                        beginAtZero:false,
+                        showLabelBackdrop: true,
+                    }
+                }]
+            }
+        }
+    });
+
+    function moveData(chart, label, data, cpColor) {
+
+        chart.data.labels.push(label);
+        if(chart.data.labels.length > 30){
+          chart.data.labels.splice(0, 1); // remove first label
+        }
+        chart.data.datasets.forEach((dataset) => {
+            // new data
+            dataset.data.push(data);
+            // data color
+            dataset.pointBackgroundColor.push(cpColor);
+
+            if(dataset.data.length > 30){
+              dataset.data.splice(0, 1); // remove first data point
+              dataset.pointBackgroundColor.splice(0, 1); // remove first data color
+          }
+        });
+
+        chart.update();
+    }
+
+
+  });
+  </script>
+</body>
+
+</html>
